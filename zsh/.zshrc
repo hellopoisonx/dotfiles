@@ -14,6 +14,10 @@ fi
 # Zsh configuration
 # -----------------
 
+alias vim="nvim"
+alias ssh="kitten ssh"
+alias icat="kitten icat"
+
 #
 # History
 #
