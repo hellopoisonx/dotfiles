@@ -18,6 +18,8 @@ alias vim="nvim"
 alias ssh="kitten ssh"
 alias icat="kitten icat"
 
+export EDITOR=nvim
+
 #
 # History
 #
