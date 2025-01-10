@@ -113,12 +113,12 @@ videobuf2_memops
 videobuf2_v4l2
 videobuf2_vmalloc
 videodev
+virtio_balloon
+virtio_blk
+virtio_net
+virtio_scsi
+virtio_serial
 wmi
 x86_pkg_temp_thermal
 xor
 x_tables
-virtio_net
-virtio_blk
-virtio_scsi
-virtio_serial
-virtio_balloon
