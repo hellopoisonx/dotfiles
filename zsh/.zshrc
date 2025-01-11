@@ -1,10 +1,3 @@
-# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
-# Initialization code that may require console input (password prompts, [y/n]
-# confirmations, etc.) must go above this block; everything else may go below.
-if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
-  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
-fi
-
 # Start configuration added by Zim install {{{
 #
 # User configuration sourced by interactive shells
@@ -13,12 +6,6 @@ fi
 # -----------------
 # Zsh configuration
 # -----------------
-
-alias vim="nvim"
-alias ssh="kitten ssh"
-alias icat="kitten icat"
-
-export EDITOR=nvim
 
 #
 # History
@@ -76,11 +63,6 @@ WORDCHARS=${WORDCHARS//[\/]}
 # See http://zsh.sourceforge.net/Doc/Release/Prompt-Expansion.html#Simple-Prompt-Escapes
 # If none is provided, the default '%n@%m: %~' is used.
 #zstyle ':zim:termtitle' format '%1~'
-
-#
-# vi-mode
-ZVM_VI_INSERT_ESCAPE_BINDKEY=jj
-#
 
 #
 # zsh-autosuggestions
@@ -146,5 +128,10 @@ for key ('j') bindkey -M vicmd ${key} history-substring-search-down
 unset key
 # }}} End configuration added by Zim install
 
-# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
-[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+alias vim="nvim"
+alias ssh="kitten ssh"
+alias icat="kitten icat"
+export EDITOR=nvim
+ZVM_VI_INSERT_ESCAPE_BINDKEY=jj
+clear
+eval "$(starship init zsh)"

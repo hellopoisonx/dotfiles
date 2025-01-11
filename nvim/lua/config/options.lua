@@ -1,4 +1,15 @@
--- Options are automatically loaded before lazy.nvim startup
--- Default options that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/options.lua
--- Add any additional options here
-vim.g.autoformat = false
+local opts = vim.o
+opts.number = true
+opts.relativenumber = true
+opts.signcolumn = "yes"
+opts.ignorecase = true
+opts.smartcase = true
+opts.tabstop = 4
+opts.shiftwidth = 4
+opts.softtabstop = 4
+opts.expandtab = true
+opts.smarttab = true
+opts.cursorline = true
+opts.ruler = true
+opts.timeoutlen = 300
+opts.clipboard="unnamedplus"
