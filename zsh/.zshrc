@@ -128,10 +128,4 @@ for key ('j') bindkey -M vicmd ${key} history-substring-search-down
 unset key
 # }}} End configuration added by Zim install
 
-alias vim="nvim"
-alias ssh="kitten ssh"
-alias icat="kitten icat"
-export EDITOR=nvim
-ZVM_VI_INSERT_ESCAPE_BINDKEY=jj
-clear
-eval "$(starship init zsh)"
+source /home/hpxx/.zshrc_fragment
