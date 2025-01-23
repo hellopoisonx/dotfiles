@@ -6,6 +6,7 @@ return {
 			"onsails/lspkind.nvim",
 		},
 		config = function()
+			vim.lsp.inlay_hint.enable(true)
 			require("lspkind").init({
 				mode = "symbol_text",
 				preset = "default",
@@ -43,9 +44,6 @@ return {
 			})
 			require("lspconfig").clangd.setup({
 				capabilities = capabilities,
-				on_init = function(_)
-					vim.lsp.inlay_hint(true)
-				end,
 			})
 			require("lspconfig").bashls.setup({
 				capabilities = capabilities,
@@ -53,9 +51,6 @@ return {
 			})
 			require("lspconfig").lua_ls.setup({
 				capabilities = capabilities,
-				on_init = function(_)
-					vim.lsp.inlay_hint(true)
-				end,
 				settings = {
 					Lua = {
 						workspace = {
@@ -72,11 +67,11 @@ return {
 						},
 						hint = {
 							enable = true,
-							setType = false,
+							setType = true,
 							paramType = true,
 							paramName = "All",
 							semicolon = "All",
-							arrayIndex = "Disable",
+							arrayIndex = "All",
 						},
 					},
 				},
