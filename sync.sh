@@ -4,6 +4,7 @@ mkdir -p ~/.config/nvim
 mkdir -p ~/.config/kitty
 mkdir -p ~/.config/ranger
 mkdir -p ~/.config/fontconfig
+mkdir -p ~/.ssh
 
 stow -R zsh
 stow -R --target="$HOME"/.config/nvim nvim
@@ -13,3 +14,4 @@ stow -R --target="$HOME"/.config/fontconfig fontconfig
 stow -R --target="$HOME"/.config picom
 stow -R --target="$HOME"/.config modprobed-db
 stow -R --target="$HOME"/.config dunst
+stow -R --target="$HOME"/.ssh ssh

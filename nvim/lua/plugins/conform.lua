@@ -8,6 +8,9 @@ return {
 			h = { "clang-format" },
 			cmake = { "cmake_format" },
 			lua = { "stylua" },
+			zsh = { "shfmt" },
+			sh = { "shfmt" },
+			bash = { "shfmt" },
 		},
 	},
 }

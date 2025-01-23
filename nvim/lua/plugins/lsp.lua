@@ -43,9 +43,19 @@ return {
 			})
 			require("lspconfig").clangd.setup({
 				capabilities = capabilities,
+				on_init = function(_)
+					vim.lsp.inlay_hint(true)
+				end,
+			})
+			require("lspconfig").bashls.setup({
+				capabilities = capabilities,
+				filetypes = { "bash", "sh", "zsh", ".zshrc" },
 			})
 			require("lspconfig").lua_ls.setup({
 				capabilities = capabilities,
+				on_init = function(_)
+					vim.lsp.inlay_hint(true)
+				end,
 				settings = {
 					Lua = {
 						workspace = {
