@@ -4,6 +4,7 @@ alias icat="kitten icat"
 alias ls="ls --color=auto"
 alias grep="grep --color=auto"
 export EDITOR=nvim
+export PATH="$PATH:$HOME/.local/bin"
 eval "$(starship init zsh)"
 
 # initialize autocompletion

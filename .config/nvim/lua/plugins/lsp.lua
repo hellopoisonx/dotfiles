@@ -45,6 +45,9 @@ return {
 			require("lspconfig").clangd.setup({
 				capabilities = capabilities,
 			})
+			require("lspconfig").pyright.setup({
+				capabilities = capabilities,
+			})
 			require("lspconfig").bashls.setup({
 				capabilities = capabilities,
 				filetypes = { "bash", "sh", "zsh", ".zshrc" },

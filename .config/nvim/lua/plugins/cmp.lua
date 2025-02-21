@@ -52,6 +52,11 @@ return {
 			}, {
 				{ name = "buffer" },
 				{ name = "path" },
+			}, { per_filetype = { codecompanion = { "codecompanion" } } }, {
+				{ name = "codecompanion_models" },
+				{ name = "codecompanion_slash_commands" },
+				{ name = "codecompanion_tools" },
+				{ name = "codecompanion_variables" },
 			}),
 		})
 		cmp.setup.cmdline(":", {

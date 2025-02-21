@@ -11,6 +11,10 @@ return {
 			zsh = { "shfmt" },
 			sh = { "shfmt" },
 			bash = { "shfmt" },
+			python = { "autopep8" },
+		},
+		default_format_opts = {
+			lsp_format = "fallback",
 		},
 	},
 }
