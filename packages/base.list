@@ -31,3 +31,4 @@ pyright
 cmake-format
 cmake-language-server
 autopep8
+btrfs-progs
