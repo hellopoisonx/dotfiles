@@ -12,6 +12,9 @@ return {
 			sh = { "shfmt" },
 			bash = { "shfmt" },
 			python = { "autopep8" },
+			json = { "jq" },
+			yaml = { "yq" },
+			go = { "gofmt" },
 		},
 		default_format_opts = {
 			lsp_format = "fallback",

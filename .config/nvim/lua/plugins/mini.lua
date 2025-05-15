@@ -54,18 +54,18 @@ return {
 		event = "VimEnter",
 		opts = {},
 	},
-	{
-		"echasnovski/mini.pick",
-		version = "*",
-		lazy = true,
-		event = "VeryLazy",
-		opts = {},
-	},
-	{
-		"echasnovski/mini.extra",
-		version = "*",
-		opts = {},
-	},
+	-- {
+	-- 	"echasnovski/mini.pick",
+	-- 	version = "*",
+	-- 	lazy = true,
+	-- 	event = "VeryLazy",
+	-- 	opts = {},
+	-- },
+	-- {
+	-- 	"echasnovski/mini.extra",
+	-- 	version = "*",
+	-- 	opts = {},
+	-- },
 	{
 		"echasnovski/mini.pairs",
 		version = "*",

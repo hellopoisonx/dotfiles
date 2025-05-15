@@ -1,0 +1,16 @@
+base
+base-devel
+linux
+linux-headers
+intel-ucode
+curl
+wget
+git
+openssh
+networkmanager
+broadcom-wl
+neovim
+sudo
+gcc
+make
+cmake

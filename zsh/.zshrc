@@ -41,3 +41,9 @@ source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.plugin.zsh
 ## must be at the tail of .zshrc
 source /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 #
+
+## [Completion]
+## Completion scripts setup. Remove the following line to uninstall
+[[ -f /home/hpxx/.dart-cli-completion/zsh-config.zsh ]] && . /home/hpxx/.dart-cli-completion/zsh-config.zsh || true
+## [/Completion]
+

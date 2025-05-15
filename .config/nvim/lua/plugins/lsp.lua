@@ -45,12 +45,18 @@ return {
 			require("lspconfig").clangd.setup({
 				capabilities = capabilities,
 			})
+			require("lspconfig").gopls.setup({
+				capabilities = capabilities,
+			})
 			require("lspconfig").pyright.setup({
 				capabilities = capabilities,
 			})
 			require("lspconfig").bashls.setup({
 				capabilities = capabilities,
 				filetypes = { "bash", "sh", "zsh", ".zshrc" },
+			})
+			require("lspconfig").ts_ls.setup({
+				capabilities = capabilities,
 			})
 			require("lspconfig").lua_ls.setup({
 				capabilities = capabilities,
