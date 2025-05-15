@@ -30,3 +30,9 @@ lightdm
 lightdm-gtk-greeter
 bluez
 bluez-utils
+xdg-dbus-proxy
+xdg-desktop-portal
+xdg-desktop-portal-gtk
+xdg-desktop-portal-xapp
+xdg-user-dirs
+xdg-utils
