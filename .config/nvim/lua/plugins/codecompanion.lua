@@ -1,60 +1,47 @@
 return {
-	"olimorris/codecompanion.nvim",
-	dependencies = {
-		"nvim-lua/plenary.nvim",
-		"nvim-treesitter/nvim-treesitter",
+	{
+		"MeanderingProgrammer/render-markdown.nvim",
+		ft = { "markdown", "codecompanion" },
 	},
-	lazy = false,
-	config = function()
-		require("codecompanion").setup({
+	{
+		"olimorris/codecompanion.nvim",
+		version = "17.33.0",
+		pin = true,
+		dependencies = {
+			"nvim-lua/plenary.nvim",
+			"nvim-treesitter/nvim-treesitter",
+		},
+		opts = {
+			-- NOTE: The log_level is in `opts.opts`
+			ignore_warnings = true,
+			opts = {
+				language = "Chinese",
+				log_level = "DEBUG", -- or "TRACE"
+			},
 			adapters = {
-				aliyun = function()
-					return require("codecompanion.adapters").extend("openai_compatible", {
-						env = {
-							url = "https://dashscope.aliyuncs.com",
-							api_key = "sk-298176e432cc4c90b02f38d69773afb0",
-							chat_url = "/compatible-mode/v1/chat/completions",
-						},
-						schema = {
-							model = {
-								default = "deepseek-r1",
+				http = {
+					deepseek_v3_2 = function()
+						return require("codecompanion.adapters").extend("openai", {
+							url = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
+							env = {
+								api_key = "{YOUR_KEY}",
 							},
-						},
-					})
-				end,
-				ty = function()
-					return require("codecompanion.adapters").extend("openai_compatible", {
-						env = {
-							url = "https://dashscope.aliyuncs.com",
-							api_key = "sk-298176e432cc4c90b02f38d69773afb0",
-							chat_url = "/compatible-mode/v1/chat/completions",
-						},
-						schema = {
-							model = {
-								default = "qwen-omni-turbo",
+							schema = {
+								model = {
+									default = "deepseek-v3",
+								},
 							},
-						},
-					})
-				end,
+						}) end,
+				},
 			},
 			strategies = {
 				chat = {
-					adapter = "ty",
+					adapter = "deepseek_v3_2",
 				},
 				inline = {
-					adapter = "ty",
-					keymaps = {
-						accept_change = {
-							modes = { n = "ac" },
-							description = "Accept the suggested change",
-						},
-						reject_change = {
-							modes = { n = "rs" },
-							description = "Reject the suggested change",
-						},
-					},
+					adapter = "deepseek_v3_2",
 				},
 			},
-		})
-	end,
+		},
+	},
 }

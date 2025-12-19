@@ -39,52 +39,53 @@ return {
 				},
 			})
 			local capabilities = require("cmp_nvim_lsp").default_capabilities()
-			require("lspconfig").cmake.setup({
+			vim.lsp.config.cmake = {
 				capabilities = capabilities,
-			})
-			require("lspconfig").clangd.setup({
+			}
+			vim.lsp.config.lua_ls = {
+				workspace = {
+					checkThirdParty = false,
+				},
+				codeLens = {
+					enable = true,
+				},
+				completion = {
+					callSnippet = "Replace",
+				},
+				doc = {
+					privateName = { "^_" },
+				},
+				hint = {
+					enable = true,
+					setType = true,
+					paramType = true,
+					paramName = "All",
+					semicolon = "All",
+					arrayIndex = "All",
+				},
+			}
+			vim.lsp.enable("lua_ls")
+			vim.lsp.config.clangd = {
 				capabilities = capabilities,
-			})
-			require("lspconfig").gopls.setup({
+			}
+			vim.lsp.enable("clangd")
+			vim.lsp.config.gopls = {
 				capabilities = capabilities,
-			})
-			require("lspconfig").pyright.setup({
+			}
+			vim.lsp.enable("gopls")
+			vim.lsp.config.pyright = {
 				capabilities = capabilities,
-			})
-			require("lspconfig").bashls.setup({
+			}
+			vim.lsp.enable("pyright")
+			vim.lsp.config.bashls = {
 				capabilities = capabilities,
 				filetypes = { "bash", "sh", "zsh", ".zshrc" },
-			})
-			require("lspconfig").ts_ls.setup({
+			}
+			vim.lsp.enable("bashls")
+			vim.lsp.config.ts_ls = {
 				capabilities = capabilities,
-			})
-			require("lspconfig").lua_ls.setup({
-				capabilities = capabilities,
-				settings = {
-					Lua = {
-						workspace = {
-							checkThirdParty = false,
-						},
-						codeLens = {
-							enable = true,
-						},
-						completion = {
-							callSnippet = "Replace",
-						},
-						doc = {
-							privateName = { "^_" },
-						},
-						hint = {
-							enable = true,
-							setType = true,
-							paramType = true,
-							paramName = "All",
-							semicolon = "All",
-							arrayIndex = "All",
-						},
-					},
-				},
-			})
+			}
+			vim.lsp.enable("ts_ls")
 		end,
 	},
 	{
