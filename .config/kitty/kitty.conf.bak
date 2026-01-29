@@ -1,3 +1,28 @@
-font_family "JetBrainsMono Nerd Font Mono"
-font_size 12.0
+font_family JetBrainsMono Nerd Font Mono
+font_size 13.0
 cursor_trail 3
+background_opacity 0.5
+background_blur 6
+enable_audio_bell no
+
+map ctrl+| launch --location=hsplit --cwd=current
+map ctrl+- launch --location=vsplit --cwd=current
+map ctrl+shift+r layout_action rotate
+
+map ctrl+shift+h move_window left
+map ctrl+shift+j move_window down
+map ctrl+shift+k move_window up
+map ctrl+shift+l move_window right
+
+map shift+alt+h neighboring_window left
+map shift+alt+j neighboring_window down
+map shift+alt+k neighboring_window up
+map shift+alt+l neighboring_window right
+
+map alt+l next_tab
+map alt+h previous_tab
+
+# BEGIN_KITTY_THEME
+# Catppuccin-Macchiato
+include current-theme.conf
+# END_KITTY_THEME
