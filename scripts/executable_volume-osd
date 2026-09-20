@@ -1,0 +1,60 @@
+#!/bin/sh
+set -eu
+
+sink='@DEFAULT_AUDIO_SINK@'
+
+case "${1:-}" in
+    raise)
+        wpctl set-volume "$sink" 0.1+ -l 1.0
+        ;;
+    lower)
+        wpctl set-volume "$sink" 0.1-
+        ;;
+    mute)
+        wpctl set-mute "$sink" toggle
+        ;;
+    show)
+        ;;
+    *)
+        echo "用法：$0 {raise|lower|mute|show}" >&2
+        exit 2
+        ;;
+esac
+
+: "${XDG_RUNTIME_DIR:?XDG_RUNTIME_DIR 未设置}"
+pid_file="$XDG_RUNTIME_DIR/volume-osd.pid"
+
+signal_daemon() {
+    [ -r "$pid_file" ] || return 1
+    pid=''
+    IFS= read -r pid < "$pid_file" || return 1
+    case "$pid" in
+        ''|*[!0-9]*) return 1 ;;
+    esac
+    [ "$pid" -gt 1 ] && kill -USR1 "$pid" 2>/dev/null
+}
+
+if signal_daemon; then
+    exit 0
+fi
+
+script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+daemon="$script_dir/volume-osd-daemon"
+if [ ! -x "$daemon" ]; then
+    echo "volume-osd: 找不到可执行守护进程 $daemon" >&2
+    exit 1
+fi
+
+"$daemon" >/dev/null 2>&1 &
+
+attempt=0
+while [ "$attempt" -lt 50 ]; do
+    sleep 0.02
+    if signal_daemon; then
+        exit 0
+    fi
+    attempt=$((attempt + 1))
+done
+
+echo "volume-osd: 守护进程启动超时" >&2
+exit 1

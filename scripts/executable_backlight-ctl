@@ -1,0 +1,18 @@
+#!/bin/bash
+# 同时调节内建屏幕（brightnessctl）和外接显示器（ddcutil）亮度
+set -euo pipefail
+
+case "${1:-}" in
+    up)
+        brightnessctl --class=backlight set +10% 2>/dev/null || true
+        ddcutil setvcp 10 + 10 --display 1 2>/dev/null || true
+        ;;
+    down)
+        brightnessctl --class=backlight set 10%- 2>/dev/null || true
+        ddcutil setvcp 10 - 10 --display 1 2>/dev/null || true
+        ;;
+    *)
+        echo "Usage: $0 {up|down}" >&2
+        exit 1
+        ;;
+esac

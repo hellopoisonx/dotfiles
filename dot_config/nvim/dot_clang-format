@@ -1,0 +1,47 @@
+---
+# Neovim 配置目录使用的 clang-format 规则：LLVM 风格
+# 当本目录中的 C / C++ / Objective-C 文件被 clang-format 处理时会读取此配置
+# 各项目应在其仓库根目录放置自己的 .clang-format 覆盖此默认值
+Language: Cpp
+Standard: c++17
+BasedOnStyle: LLVM
+
+# 缩进
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+ContinuationIndentWidth: 4
+AccessModifierOffset: -2
+NamespaceIndentation: None
+
+# 列宽
+ColumnLimit: 80
+
+# 大括号：Attach（开括号紧贴上一行）
+BreakBeforeBraces: Attach
+
+# 指针 / 引用对齐：右贴
+PointerAlignment: Right
+ReferenceAlignment: Pointer
+
+# include 排序
+SortIncludes: true
+IncludeBlocks: Preserve
+
+# 短块保持紧凑
+AllowShortFunctionsOnASingleLine: All
+AllowShortLambdasOnASingleLine: All
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+AllowShortBlocksOnASingleLine: Never
+
+# 模板
+AlwaysBreakTemplateDeclarations: MultiLine
+
+# 空行
+MaxEmptyLinesToKeep: 1
+KeepEmptyLinesAtTheStartOfBlocks: true
+
+# 注释
+ReflowComments: true
+FixNamespaceComments: true

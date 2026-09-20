@@ -1,0 +1,76 @@
+# Lines configured by zsh-newuser-install
+HISTFILE=~/.zsh_history
+HISTSIZE=50000
+SAVEHIST=50000
+setopt HIST_IGNORE_ALL_DUPS HIST_SAVE_NO_DUPS SHARE_HISTORY
+# End of lines configured by zsh-newuser-install
+eval $(dircolors -b)
+zstyle ':completion:*' menu select
+zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
+zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
+zstyle ':completion:*:default' list-prompt '%S%M matches%s'
+zstyle :compinstall filename '/home/hpxx/.zshrc'
+
+# Load interactive terminal features only when stdout is a usable TTY.
+if [[ -n ${TERM:-} && $TERM != dumb && -t 1 ]]; then
+autoload -Uz compinit
+compinit
+
+# kitty shell integration — reports CWD to kitty so new tabs/windows inherit it
+[[ "$TERM" == "xterm-kitty" ]] && source /usr/lib/kitty/shell-integration/zsh/kitty.zsh
+
+
+# --- fzf ---
+export FZF_DEFAULT_OPTS='--height 40% --layout reverse --border --color=fg:#d0d0d0,bg:#1a1a1a,hl:#ffaf00,fg+:#ffffff,bg+:#2a2a2a,hl+:#ffaf00,info:#afaf5f,prompt:#5fafd7,pointer:#ff5f5f,marker:#87ff5f,spinner:#ff5fff,header:#87afaf'
+export FZF_CTRL_R_OPTS='--preview "echo {}" --preview-window down:3:hidden:wrap'
+source /usr/share/fzf/key-bindings.zsh
+
+# Zplug
+source ~/.zplug/init.zsh
+
+zplug "zsh-users/zsh-syntax-highlighting", as:plugin
+
+# Neovim terminal buffers (including floating terminals) inherit $NVIM.
+# Do not register zsh-vi-mode there: Terminal mode needs regular shell input.
+if [[ -z ${NVIM:-} ]]; then
+    # zsh-vi-mode inits lazily via precmd (zvm_init), which runs AFTER custom precmd hooks.
+    # Use zvm_after_init_commands to rebind fzf at the END of zvm_init (line 3940 of zvm source).
+    zvm_after_init_commands+=('source /usr/share/fzf/key-bindings.zsh; bindkey -M viins "^R" fzf-history-widget; bindkey -M vicmd "^R" fzf-history-widget')
+    zplug "jeffreytse/zsh-vi-mode"
+    ZVM_VI_ESCAPE_BINDKEY=jj
+fi
+
+zplug "zsh-users/zsh-autosuggestions", as:plugin
+
+if ! zplug check --verbose; then
+    if [[ -t 0 && -t 1 ]]; then
+        printf "Install zplug plugins? [y/N]: "
+        if read -q; then
+            echo; zplug install
+        fi
+    else
+        zplug install
+    fi
+fi
+
+zplug load --verbose
+
+# zsh-vi-mode may have left the global main keymap in viins from an earlier shell setup.
+# Restore standard ZLE bindings for Neovim terminal buffers.
+if [[ -n ${NVIM:-} ]]; then
+    bindkey -e
+fi
+
+source /usr/share/fzf/completion.zsh
+
+
+eval "$(chezmoi completion zsh)"
+eval "$(starship init zsh)"
+fi
+source /usr/share/nvm/init-nvm.sh
+
+PATH=$PATH:$HOME/scripts:$HOME/.local/bin:$HOME/go/bin:$HOME/.bun/bin
+alias cm="EDITOR=nvim chezmoi"
+alias ls="ls --color"
+export PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+export EDITOR=nvim

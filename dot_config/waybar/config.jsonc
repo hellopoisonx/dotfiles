@@ -1,0 +1,158 @@
+// -*- mode: jsonc -*-
+{
+    "layer": "top",
+    "position": "top",
+    "height": 42,
+    "spacing": 0,
+    "margin-top": 4,
+    "margin-left": 8,
+    "margin-right": 8,
+
+    "modules-left": [
+        "custom/resource",
+        "niri/window"
+    ],
+    "modules-center": [
+        "niri/workspaces"
+    ],
+    "modules-right": [
+        "network",
+        "pulseaudio",
+        "custom/backlight",
+        "battery",
+        // "custom/opencode",
+        "clock",
+        "tray",
+        "idle_inhibitor",
+        "bluetooth",
+        "custom/mako"
+    ],
+
+    // ── Workspaces ──────────────────────────────────────────
+    "niri/workspaces": {
+        "format": "{icon}",
+        "format-icons": {
+            "active": "●",
+            "focused": "●",
+            "default": "○"
+        },
+        "disable-click": false,
+        "all-outputs": false
+    },
+
+    // ── Window Title ────────────────────────────────────────
+    "niri/window": {
+        "format": "{title}",
+        "separate-outputs": true,
+        "icon": false,
+        "tooltip": false
+    },
+
+    // ── Audio ───────────────────────────────────────────────
+    "pulseaudio": {
+        "format": "{icon} {volume}%",
+        "format-muted": "󰝟 {volume}%",
+        "format-icons": {
+            "default": ["", "", ""]
+        },
+        "scroll-step": 5,
+        "on-click": "pavucontrol"
+    },
+
+    // ── Network ─────────────────────────────────────────────
+    "network": {
+        "format-wifi": "  {signalStrength}%",
+        "format-ethernet": "󰈀  {signalStrength}%",
+        "format-disconnected": "  ✕",
+        "format-linked": "  …",
+        "tooltip-format": "{ifname}",
+        "on-click": "kitty --class float -e nmtui"
+    },
+
+    // ── Backlight ───────────────────────────────────────────
+    "custom/backlight": {
+        "exec": "~/.config/waybar/scripts/backlight-status.sh",
+        "return-type": "json",
+        "interval": 5,
+        "on-scroll-up": "/home/hpxx/.local/bin/backlight-ctl up",
+        "on-scroll-down": "/home/hpxx/.local/bin/backlight-ctl down",
+        "tooltip": true
+    },
+
+    // ── Battery ─────────────────────────────────────────────
+    "battery": {
+        "format": "{icon} {capacity}%",
+        "format-charging": " {capacity}%",
+        "format-icons": ["", "", "", "", ""],
+        "states": {
+            "warning": 30,
+            "critical": 15
+        }
+    },
+
+    // ── OpenCode Go Usage ────────────────────────────────────
+    "custom/opencode": {
+        "exec": "~/.config/waybar/scripts/opencode-usage.py",
+        "return-type": "json",
+        "interval": 60,
+        "tooltip": true,
+        "on-click": "xdg-open https://opencode.ai/",
+        "escape": false
+    },
+
+    // ── Clock ───────────────────────────────────────────────
+    "clock": {
+        "format": "  {:%H:%M}",
+        "tooltip-format": "<big>{:%Y-%m-%d}</big>\n<tt>{calendar}</tt>"
+    },
+    // ── System Tray ─────────────────────────────────────────
+    "tray": {
+        "icon-size": 18,
+        "spacing": 6,
+        "show-passive-items": true
+    },
+
+    // ── Idle Inhibitor ──────────────────────────────────────
+    "idle_inhibitor": {
+        "format": "{icon}",
+        "format-icons": {
+            "activated": "",
+            "deactivated": ""
+        },
+        "tooltip": true,
+        "tooltip-format-activated": "Presentation mode: on",
+        "tooltip-format-deactivated": "Presentation mode: off"
+    },
+
+    // ── Bluetooth ───────────────────────────────────────────
+    "bluetooth": {
+        "format-on": "",
+        "format-off": "",
+        "format-disabled": "",
+        "tooltip-format": "{controller_alias}\t{controller_address}\n\n{num_connections} connected",
+        "tooltip-format-connected": "{controller_alias}\t{controller_address}\n\n{num_connections} connected\n\n{device_enumerate}",
+        "tooltip-format-enumerate-connected": "{device_alias}\t{device_address}",
+        "tooltip-format-enumerate-connected-battery": "{device_alias}\t{device_address}\t{device_battery_percentage}%"
+    },
+
+
+    // ── Resource Monitor ─────────────────────────────────────
+    "custom/resource": {
+        "exec": "~/.config/waybar/scripts/resource-monitor.sh",
+        "return-type": "json",
+        "interval": 3,
+        "on-click": "kitty --class float -e btop",
+        "tooltip": true
+    },
+    // ── Notification Center (mako) ──────────────────────────
+    "custom/mako": {
+        "exec": "~/.config/waybar/scripts/mako-status.sh",
+        "return-type": "json",
+        "interval": 5,
+        "on-click": "makoctl dismiss -a",
+        "on-click-right": "makoctl mode -t do-not-disturb",
+        "on-click-middle": "makoctl restore",
+        "tooltip": true,
+        "escape": false
+    }
+}

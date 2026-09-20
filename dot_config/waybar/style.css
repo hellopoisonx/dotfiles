@@ -1,0 +1,238 @@
+@import url("./catppuccin/themes/mocha.css");
+
+* {
+    font-family: monospace, "Font Awesome 6 Free", sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    min-height: 0;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    text-shadow: none;
+}
+
+window#waybar {
+    background: transparent;
+    color: @text;
+}
+
+/* ── Section Spacing ────────────────────────────────────── */
+
+.modules-left,
+.modules-center,
+.modules-right {
+    background: transparent;
+    margin: 3px 8px;
+    padding: 0;
+}
+
+.modules-left {
+    margin-left: 0;
+}
+
+.modules-right {
+    margin-right: 0;
+}
+
+/* ── Per-module Pills ───────────────────────────────────── */
+
+#custom-resource,
+#window,
+#workspaces {
+    background: alpha(@surface0, 0.88);
+    border-radius: 18px;
+    margin: 0 3px;
+    padding: 0 9px;
+}
+
+#pulseaudio,
+#network,
+#custom-backlight,
+#battery,
+#custom-opencode,
+#clock,
+#tray,
+#idle_inhibitor,
+#bluetooth,
+#custom-mako {
+    background: alpha(@surface0, 0.88);
+    border-radius: 18px;
+    margin: 0 3px;
+    padding: 0 9px;
+}
+/* ── Workspaces ─────────────────────────────────────────── */
+
+#workspaces {
+    padding: 0 4px;
+}
+
+#workspaces button {
+    padding: 0 6px;
+    margin: 0 1px;
+    color: @overlay0;
+    background: transparent;
+    border-radius: 18px;
+    transition: all 0.2s ease;
+}
+
+#workspaces button.active,
+#workspaces button.focused {
+    color: @mauve;
+}
+
+#workspaces button:hover {
+    color: @text;
+    background: alpha(@surface2, 0.4);
+}
+
+#workspaces button.urgent {
+    color: @red;
+}
+
+/* ── Window Title ───────────────────────────────────────── */
+
+#window {
+    padding: 0 12px;
+    color: @text;
+}
+
+#window label {
+    min-width: 160px;
+}
+
+window#waybar.empty #window {
+    background: transparent;
+    margin: 0;
+    padding: 0;
+}
+
+window#waybar.empty #window label {
+    min-width: 0;
+    font-size: 0;
+}
+
+
+/* ── System Tray ────────────────────────────────────────── */
+
+#tray > .passive {
+    -gtk-icon-effect: dim;
+}
+
+#tray > .needs-attention {
+    -gtk-icon-effect: highlight;
+    color: @red;
+}
+
+/* ── Audio ──────────────────────────────────────────────── */
+
+#pulseaudio.muted {
+    color: @overlay0;
+}
+
+/* ── Network ────────────────────────────────────────────── */
+
+#network.disconnected {
+    color: @overlay0;
+}
+
+/* ── Battery Warnings ───────────────────────────────────── */
+
+#battery.warning {
+    color: @peach;
+}
+
+#battery.critical {
+    color: @red;
+}
+
+#battery.charging {
+    color: @green;
+}
+
+/* ── Idle Inhibitor ─────────────────────────────────────── */
+
+#idle_inhibitor.activated {
+    color: @yellow;
+}
+
+#idle_inhibitor {
+    color: @overlay0;
+}
+
+/* ── Bluetooth ──────────────────────────────────────────── */
+
+#bluetooth.on {
+    color: @sky;
+}
+
+#bluetooth.off {
+    color: @overlay0;
+}
+
+
+/* ── Resource Monitor ─────────────────────────────────────── */
+
+#custom-resource.moderate {
+    color: @yellow;
+}
+
+#custom-resource.warning {
+    color: @peach;
+}
+
+#custom-resource.critical {
+    color: @red;
+}
+/* ── Tooltips ───────────────────────────────────────────── */
+
+tooltip {
+    background: @surface0;
+    border: 1px solid @surface2;
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: @text;
+}
+
+tooltip label {
+    font-size: 13px;
+}
+
+/* ── Notification Center ────────────────────────────────── */
+
+#custom-mako {
+    color: @overlay0;
+}
+
+#custom-mako.has-notifications {
+    color: @text;
+}
+
+#custom-mako.dnd {
+    color: @red;
+}
+
+/* ── OpenCode Go Usage ───────────────────────────────────── */
+
+#custom-opencode {
+    color: @text;
+}
+
+#custom-opencode.ok {
+    color: @green;
+}
+
+#custom-opencode.warning {
+    color: @peach;
+}
+
+#custom-opencode.critical {
+    color: @red;
+}
+
+#custom-opencode.auth {
+    color: @maroon;
+}
+
+#custom-opencode.error {
+    color: @yellow;
+}

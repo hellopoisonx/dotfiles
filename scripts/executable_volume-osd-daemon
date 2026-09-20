@@ -1,0 +1,528 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import fcntl
+import json
+import math
+import os
+import re
+import signal
+import subprocess
+import sys
+import time
+from collections.abc import Callable
+
+import cairo
+import gi
+
+gi.require_version("Gdk", "3.0")
+gi.require_version("Gtk", "3.0")
+gi.require_version("GtkLayerShell", "0.1")
+from gi.repository import Gdk, GLib, Gtk, GtkLayerShell
+
+CANVAS_WIDTH = 104
+CANVAS_HEIGHT = 338
+RIGHT_MARGIN = 28
+HIDE_DELAY_MS = 1600
+ANIMATION_SECONDS = 0.18
+
+TRACK_X = 31.0
+TRACK_Y = 89.0
+TRACK_WIDTH = 42.0
+TRACK_HEIGHT = 178.0
+TRACK_BOTTOM = TRACK_Y + TRACK_HEIGHT
+
+# Catppuccin Mocha Flamingo：与 niri 主题文件保持同一组色值。
+BASE = (0x1E / 255, 0x1E / 255, 0x2E / 255)
+MANTLE = (0x18 / 255, 0x18 / 255, 0x25 / 255)
+SURFACE_0 = (0x31 / 255, 0x32 / 255, 0x44 / 255)
+SURFACE_1 = (0x45 / 255, 0x47 / 255, 0x5A / 255)
+SURFACE_2 = (0x58 / 255, 0x5B / 255, 0x70 / 255)
+TEXT = (0xCD / 255, 0xD6 / 255, 0xF4 / 255)
+SUBTEXT = (0xA6 / 255, 0xAD / 255, 0xC8 / 255)
+FLAMINGO = (0xF2 / 255, 0xCD / 255, 0xCD / 255)
+RED = (0xF3 / 255, 0x8B / 255, 0xA8 / 255)
+
+VOLUME_RE = re.compile(r"Volume:\s*([0-9]+(?:\.[0-9]+)?)")
+
+
+def set_source(cr: cairo.Context, color: tuple[float, float, float], alpha: float = 1.0) -> None:
+    cr.set_source_rgba(color[0], color[1], color[2], alpha)
+
+
+def rounded_rectangle(
+    cr: cairo.Context,
+    x: float,
+    y: float,
+    width: float,
+    height: float,
+    radius: float,
+) -> None:
+    radius = min(radius, width / 2, height / 2)
+    cr.new_sub_path()
+    cr.arc(x + width - radius, y + radius, radius, -math.pi / 2, 0)
+    cr.arc(x + width - radius, y + height - radius, radius, 0, math.pi / 2)
+    cr.arc(x + radius, y + height - radius, radius, math.pi / 2, math.pi)
+    cr.arc(x + radius, y + radius, radius, math.pi, 3 * math.pi / 2)
+    cr.close_path()
+
+
+def run_wpctl(*arguments: str) -> str:
+    result = subprocess.run(
+        ["wpctl", *arguments],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        message = result.stderr.strip() or result.stdout.strip() or "wpctl 执行失败"
+        raise RuntimeError(message)
+    return result.stdout
+
+
+def get_sink_state() -> tuple[float, bool]:
+    output = run_wpctl("get-volume", "@DEFAULT_AUDIO_SINK@")
+    match = VOLUME_RE.search(output)
+    if match is None:
+        raise RuntimeError(f"无法解析 wpctl 输出：{output.strip()}")
+    volume = min(max(float(match.group(1)), 0.0), 1.0)
+    return volume, "[MUTED]" in output
+
+
+class VolumeCanvas(Gtk.DrawingArea):
+    def __init__(self, command_callback: Callable[[str, float | None], None]) -> None:
+        super().__init__()
+        self.set_size_request(CANVAS_WIDTH, CANVAS_HEIGHT)
+        self.add_events(
+            Gdk.EventMask.BUTTON_PRESS_MASK
+            | Gdk.EventMask.BUTTON_RELEASE_MASK
+            | Gdk.EventMask.POINTER_MOTION_MASK
+            | Gdk.EventMask.SCROLL_MASK
+        )
+        self.connect("draw", self._draw)
+        self.connect("button-press-event", self._on_button_press)
+        self.connect("button-release-event", self._on_button_release)
+        self.connect("motion-notify-event", self._on_motion)
+        self.connect("scroll-event", self._on_scroll)
+
+        self.command_callback = command_callback
+        self.displayed_volume = 0.0
+        self.target_volume = 0.0
+        self.animation_start_volume = 0.0
+        self.animation_started_at = 0.0
+        self.animation_source_id = 0
+        self.muted = False
+        self.dragging = False
+        self.last_drag_update = 0.0
+
+    def set_audio_state(self, volume: float, muted: bool, animate: bool) -> None:
+        volume = min(max(volume, 0.0), 1.0)
+        self._sample_animation()
+        self.muted = muted
+        self.target_volume = volume
+
+        if not animate or abs(self.displayed_volume - volume) < 0.001:
+            self.displayed_volume = volume
+            self.animation_start_volume = volume
+            self._stop_animation()
+            self.queue_draw()
+            return
+
+        self.animation_start_volume = self.displayed_volume
+        self.animation_started_at = time.monotonic()
+        if self.animation_source_id == 0:
+            self.animation_source_id = GLib.timeout_add(16, self._animation_tick)
+        self.queue_draw()
+
+    def cancel_drag(self) -> None:
+        self.dragging = False
+
+    def _sample_animation(self) -> None:
+        if self.animation_source_id == 0:
+            return
+        progress = min(
+            max((time.monotonic() - self.animation_started_at) / ANIMATION_SECONDS, 0.0),
+            1.0,
+        )
+        self.displayed_volume = self.animation_start_volume + (
+            self.target_volume - self.animation_start_volume
+        ) * progress
+
+    def _animation_tick(self) -> bool:
+        self._sample_animation()
+        self.queue_draw()
+        if abs(self.displayed_volume - self.target_volume) < 0.001:
+            self.displayed_volume = self.target_volume
+            self.animation_source_id = 0
+            return GLib.SOURCE_REMOVE
+        return GLib.SOURCE_CONTINUE
+
+    def _stop_animation(self) -> None:
+        if self.animation_source_id != 0:
+            GLib.source_remove(self.animation_source_id)
+            self.animation_source_id = 0
+
+    def _draw(self, _widget: Gtk.Widget, cr: cairo.Context) -> bool:
+        cr.set_antialias(cairo.ANTIALIAS_BEST)
+        self._draw_container(cr)
+        self._draw_header(cr)
+        self._draw_track(cr)
+        self._draw_percentage(cr)
+        return False
+
+    def _draw_container(self, cr: cairo.Context) -> None:
+        for spread, offset, alpha in ((7.0, 4.0, 0.08), (4.0, 3.0, 0.12), (1.5, 2.0, 0.16)):
+            rounded_rectangle(
+                cr,
+                13.0 - spread,
+                12.0 - spread + offset,
+                78.0 + spread * 2,
+                314.0 + spread * 2,
+                39.0 + spread,
+            )
+            set_source(cr, MANTLE, alpha)
+            cr.fill()
+
+        rounded_rectangle(cr, 13.0, 12.0, 78.0, 314.0, 39.0)
+        set_source(cr, BASE, 0.98)
+        cr.fill_preserve()
+        set_source(cr, SURFACE_2, 0.85)
+        cr.set_line_width(1.2)
+        cr.stroke()
+
+    def _draw_header(self, cr: cairo.Context) -> None:
+        cr.arc(52.0, 52.0, 25.0, 0, 2 * math.pi)
+        set_source(cr, RED if self.muted else FLAMINGO)
+        cr.fill()
+        self._draw_speaker(cr, 52.0, 52.0)
+
+    def _draw_speaker(self, cr: cairo.Context, center_x: float, center_y: float) -> None:
+        set_source(cr, BASE)
+        cr.move_to(center_x - 12, center_y - 4)
+        cr.line_to(center_x - 7, center_y - 4)
+        cr.line_to(center_x + 1, center_y - 11)
+        cr.line_to(center_x + 1, center_y + 11)
+        cr.line_to(center_x - 7, center_y + 4)
+        cr.line_to(center_x - 12, center_y + 4)
+        cr.close_path()
+        cr.fill()
+
+        cr.set_line_width(2.2)
+        cr.set_line_cap(cairo.LINE_CAP_ROUND)
+        if self.muted:
+            cr.move_to(center_x + 7, center_y - 6)
+            cr.line_to(center_x + 16, center_y + 6)
+            cr.move_to(center_x + 16, center_y - 6)
+            cr.line_to(center_x + 7, center_y + 6)
+            cr.stroke()
+            return
+
+        if self.displayed_volume > 0.01:
+            cr.arc(center_x + 1, center_y, 8, -0.72, 0.72)
+            cr.stroke()
+        if self.displayed_volume >= 0.5:
+            cr.arc(center_x + 1, center_y, 13, -0.65, 0.65)
+            cr.stroke()
+
+    def _draw_track(self, cr: cairo.Context) -> None:
+        rounded_rectangle(cr, TRACK_X, TRACK_Y, TRACK_WIDTH, TRACK_HEIGHT, TRACK_WIDTH / 2)
+        set_source(cr, SURFACE_0)
+        cr.fill()
+
+        fill_height = TRACK_HEIGHT * self.displayed_volume
+        fill_y = TRACK_BOTTOM - fill_height
+        if fill_height > 0:
+            cr.save()
+            rounded_rectangle(cr, TRACK_X, TRACK_Y, TRACK_WIDTH, TRACK_HEIGHT, TRACK_WIDTH / 2)
+            cr.clip()
+            cr.rectangle(TRACK_X, fill_y, TRACK_WIDTH, fill_height)
+            set_source(cr, SURFACE_2 if self.muted else FLAMINGO)
+            cr.fill()
+            cr.restore()
+
+        if 0.02 < self.displayed_volume < 0.98:
+            cr.move_to(TRACK_X + 4, fill_y)
+            cr.line_to(TRACK_X + TRACK_WIDTH - 4, fill_y)
+            set_source(cr, BASE)
+            cr.set_line_width(3.0)
+            cr.stroke()
+
+        note_y = TRACK_BOTTOM - 25
+        note_color = BASE if not self.muted and fill_y <= note_y - 2 else SUBTEXT
+        self._draw_music_note(cr, TRACK_X + TRACK_WIDTH / 2, note_y, note_color)
+
+    @staticmethod
+    def _draw_music_note(
+        cr: cairo.Context,
+        center_x: float,
+        center_y: float,
+        color: tuple[float, float, float],
+    ) -> None:
+        set_source(cr, color)
+        cr.set_line_width(2.4)
+        cr.set_line_cap(cairo.LINE_CAP_ROUND)
+        cr.move_to(center_x + 3, center_y - 11)
+        cr.line_to(center_x + 3, center_y + 2)
+        cr.stroke()
+        cr.arc(center_x - 1, center_y + 4, 4.2, 0, 2 * math.pi)
+        cr.fill()
+        cr.move_to(center_x + 3, center_y - 11)
+        cr.line_to(center_x + 10, center_y - 9)
+        cr.set_line_width(2.0)
+        cr.stroke()
+
+    def _draw_percentage(self, cr: cairo.Context) -> None:
+        label = "MUTE" if self.muted else f"{int(round(self.target_volume * 100))}%"
+        set_source(cr, RED if self.muted else TEXT)
+        cr.select_font_face("Sans", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
+        cr.set_font_size(10.5)
+        x_bearing, _y_bearing, width, _height, _x_advance, _y_advance = cr.text_extents(label)
+        cr.move_to(52.0 - width / 2 - x_bearing, 303.0)
+        cr.show_text(label)
+
+    def _on_button_press(self, _widget: Gtk.Widget, event: Gdk.EventButton) -> bool:
+        if event.button != 1:
+            return False
+        if math.hypot(event.x - 52.0, event.y - 52.0) <= 25.0:
+            self.command_callback("mute", None)
+            return True
+        if self._inside_track(event.x, event.y):
+            self.dragging = True
+            self.last_drag_update = time.monotonic()
+            self.command_callback("set", self._volume_from_y(event.y))
+            return True
+        return False
+
+    def _on_button_release(self, _widget: Gtk.Widget, event: Gdk.EventButton) -> bool:
+        if event.button != 1 or not self.dragging:
+            return False
+        self.dragging = False
+        self.command_callback("set", self._volume_from_y(event.y))
+        return True
+
+    def _on_motion(self, _widget: Gtk.Widget, event: Gdk.EventMotion) -> bool:
+        if not self.dragging:
+            return False
+        now = time.monotonic()
+        if now - self.last_drag_update >= 0.04:
+            self.last_drag_update = now
+            self.command_callback("set", self._volume_from_y(event.y))
+        return True
+
+    def _on_scroll(self, _widget: Gtk.Widget, event: Gdk.EventScroll) -> bool:
+        if event.direction == Gdk.ScrollDirection.UP:
+            self.command_callback("raise", None)
+            return True
+        if event.direction == Gdk.ScrollDirection.DOWN:
+            self.command_callback("lower", None)
+            return True
+        return False
+
+    @staticmethod
+    def _inside_track(x: float, y: float) -> bool:
+        return TRACK_X <= x <= TRACK_X + TRACK_WIDTH and TRACK_Y <= y <= TRACK_BOTTOM
+
+    @staticmethod
+    def _volume_from_y(y: float) -> float:
+        return min(max((TRACK_BOTTOM - y) / TRACK_HEIGHT, 0.0), 1.0)
+
+
+class VolumeOSD:
+    def __init__(self) -> None:
+        self.window = Gtk.Window(type=Gtk.WindowType.TOPLEVEL)
+        self.window.set_title("Volume OSD")
+        self.window.set_decorated(False)
+        self.window.set_resizable(False)
+        self.window.set_accept_focus(False)
+        self.window.set_skip_pager_hint(True)
+        self.window.set_skip_taskbar_hint(True)
+        self.window.set_app_paintable(True)
+        self.window.connect("destroy", Gtk.main_quit)
+
+        screen = self.window.get_screen()
+        visual = screen.get_rgba_visual()
+        if visual is not None:
+            self.window.set_visual(visual)
+
+        provider = Gtk.CssProvider()
+        provider.load_from_data(b"window { background-color: transparent; }")
+        Gtk.StyleContext.add_provider_for_screen(
+            screen,
+            provider,
+            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
+        )
+
+        GtkLayerShell.init_for_window(self.window)
+        GtkLayerShell.set_namespace(self.window, "volume-osd")
+        GtkLayerShell.set_layer(self.window, GtkLayerShell.Layer.OVERLAY)
+        GtkLayerShell.set_anchor(self.window, GtkLayerShell.Edge.RIGHT, True)
+        GtkLayerShell.set_margin(self.window, GtkLayerShell.Edge.RIGHT, RIGHT_MARGIN)
+        GtkLayerShell.set_exclusive_zone(self.window, 0)
+        GtkLayerShell.set_keyboard_mode(self.window, GtkLayerShell.KeyboardMode.NONE)
+
+        self.canvas = VolumeCanvas(self._handle_widget_command)
+        self.window.add(self.canvas)
+        self.hide_source_id = 0
+
+        volume, muted = get_sink_state()
+        self.canvas.set_audio_state(volume, muted, animate=False)
+
+    def refresh_and_show(self) -> bool:
+        try:
+            volume, muted = get_sink_state()
+        except RuntimeError as error:
+            print(f"volume-osd: {error}", file=sys.stderr, flush=True)
+            return GLib.SOURCE_REMOVE
+        self.canvas.set_audio_state(volume, muted, animate=True)
+        self._show()
+        return GLib.SOURCE_REMOVE
+
+    def _on_refresh_signal(self) -> bool:
+        self.refresh_and_show()
+        return GLib.SOURCE_CONTINUE
+
+    def _handle_widget_command(self, command: str, value: float | None) -> None:
+        try:
+            if command == "raise":
+                run_wpctl("set-volume", "@DEFAULT_AUDIO_SINK@", "0.05+", "-l", "1.0")
+            elif command == "lower":
+                run_wpctl("set-volume", "@DEFAULT_AUDIO_SINK@", "0.05-")
+            elif command == "mute":
+                run_wpctl("set-mute", "@DEFAULT_AUDIO_SINK@", "toggle")
+            elif command == "set" and value is not None:
+                run_wpctl(
+                    "set-volume",
+                    "@DEFAULT_AUDIO_SINK@",
+                    f"{min(max(value, 0.0), 1.0):.3f}",
+                    "-l",
+                    "1.0",
+                )
+            else:
+                return
+            self.refresh_and_show()
+        except RuntimeError as error:
+            print(f"volume-osd: {error}", file=sys.stderr, flush=True)
+
+    def _show(self) -> None:
+        if not self.window.get_visible():
+            self._move_to_focused_output()
+        self.window.show_all()
+        if self.hide_source_id != 0:
+            GLib.source_remove(self.hide_source_id)
+        self.hide_source_id = GLib.timeout_add(HIDE_DELAY_MS, self._hide)
+
+    def _hide(self) -> bool:
+        self.canvas.cancel_drag()
+        self.window.hide()
+        self.hide_source_id = 0
+        return GLib.SOURCE_REMOVE
+
+    def _move_to_focused_output(self) -> None:
+        try:
+            result = subprocess.run(
+                ["niri", "msg", "-j", "focused-output"],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            if result.returncode != 0:
+                return
+            logical = json.loads(result.stdout).get("logical")
+            if logical is None:
+                return
+            display = Gdk.Display.get_default()
+            monitor = display.get_monitor_at_point(
+                logical["x"] + logical["width"] // 2,
+                logical["y"] + logical["height"] // 2,
+            )
+            if monitor is not None:
+                GtkLayerShell.set_monitor(self.window, monitor)
+        except (KeyError, TypeError, ValueError, json.JSONDecodeError):
+            return
+
+
+def pid_file_path() -> str:
+    runtime_dir = os.environ.get("XDG_RUNTIME_DIR")
+    if not runtime_dir:
+        raise RuntimeError("XDG_RUNTIME_DIR 未设置")
+    return os.path.join(runtime_dir, "volume-osd.pid")
+
+
+def acquire_instance_lock(path: str):
+    fd = os.open(path, os.O_RDWR | os.O_CREAT, 0o600)
+    handle = os.fdopen(fd, "r+", encoding="utf-8")
+    try:
+        fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        handle.close()
+        return None
+    handle.seek(0)
+    handle.truncate()
+    handle.write("0\n")
+    handle.flush()
+    return handle
+
+
+def publish_instance_pid(handle) -> None:
+    handle.seek(0)
+    handle.truncate()
+    handle.write(f"{os.getpid()}\n")
+    handle.flush()
+
+
+def release_instance_lock(handle) -> None:
+    try:
+        handle.seek(0)
+        handle.truncate()
+        handle.write("0\n")
+        handle.flush()
+        fcntl.flock(handle, fcntl.LOCK_UN)
+    finally:
+        handle.close()
+
+
+def main() -> int:
+    arguments = set(sys.argv[1:])
+    unknown = arguments - {"--verbose"}
+    if unknown:
+        print(f"用法：{sys.argv[0]} [--verbose]", file=sys.stderr)
+        return 2
+
+    try:
+        path = pid_file_path()
+        lock_handle = acquire_instance_lock(path)
+    except (OSError, RuntimeError) as error:
+        print(f"volume-osd: {error}", file=sys.stderr)
+        return 1
+
+    if lock_handle is None:
+        return 0
+
+    try:
+        Gtk.init([])
+        osd = VolumeOSD()
+        GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, signal.SIGUSR1, osd._on_refresh_signal)
+        GLib.unix_signal_add(
+            GLib.PRIORITY_DEFAULT,
+            signal.SIGTERM,
+            lambda: (Gtk.main_quit(), GLib.SOURCE_REMOVE)[1],
+        )
+        GLib.unix_signal_add(
+            GLib.PRIORITY_DEFAULT,
+            signal.SIGINT,
+            lambda: (Gtk.main_quit(), GLib.SOURCE_REMOVE)[1],
+        )
+        publish_instance_pid(lock_handle)
+        if "--verbose" in arguments:
+            print("volume-osd: ready", flush=True)
+        Gtk.main()
+        return 0
+    except (OSError, RuntimeError, GLib.Error) as error:
+        print(f"volume-osd: {error}", file=sys.stderr)
+        return 1
+    finally:
+        release_instance_lock(lock_handle)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

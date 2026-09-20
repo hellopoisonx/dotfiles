@@ -1,0 +1,21 @@
+border-radius=12
+border-size=3
+anchor=bottom-right
+font=monospace
+format=<b>%a</b>\n %s\n%b
+default-timeout=5000
+
+# Colors
+# @catppuccin https://github.com/catppuccin/mako/raw/refs/heads/main/themes/catppuccin-mocha/catppuccin-mocha-flamingo
+
+background-color=#1e1e2e
+text-color=#cdd6f4
+border-color=#f2cdcd
+progress-color=over #313244
+
+[urgency=high]
+border-color=#fab387
+default-timeout=0
+
+[mode=do-not-disturb]
+invisible=1

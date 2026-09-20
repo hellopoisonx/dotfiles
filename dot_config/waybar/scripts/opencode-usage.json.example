@@ -1,0 +1,30 @@
+{
+  "_说明": "OpenCode Go 用量监控配置。复制本文件为 opencode-usage.json 并填入账号。",
+
+  "accounts": [
+    {
+      "_注释": "账号显示名（出现在 waybar 状态栏和 tooltip 中）",
+      "name": "A1",
+
+      "_cookies": "浏览器登录 opencode.ai 后 F12 → Network → 任意 _server 请求 → Request Headers → 复制 Cookie 字段完整值（格式如 oc_locale=zh; auth=Fe26.2**...；含 auth、oc_locale、provider 等全部键）",
+      "cookies": "oc_locale=zh; auth=Fe26.2**你的token**",
+
+      "_workspace_id": "访问 https://opencode.ai/workspace/{这里}/go ，从地址栏复制中间的 wrk_xxx",
+      "workspace_id": "wrk_xxxxxxxxxxxxxxxxxxxxx",
+
+      "_server_id": "可选，缺省使用默认值。F12 → Network → _server 请求 → x-server-id",
+      "server_id": "c7389bd0e731f80f49593e5ee53835475f4e28594dd6bd83eb229bab753498cd",
+
+      "_server_instance": "可选，缺省 server-fn:3",
+      "server_instance": "server-fn:3",
+
+      "_plan_monthly_limit": "可选。月额度上限（美元）。仅当 API 不返回 limit 时使用。",
+      "plan_monthly_limit": null
+    },
+    {
+      "name": "A2",
+      "cookies": "oc_locale=zh; auth=Fe26.2**另一个账号的token**",
+      "workspace_id": "wrk_yyyyyyyyyyyyyyyy"
+    }
+  ]
+}
